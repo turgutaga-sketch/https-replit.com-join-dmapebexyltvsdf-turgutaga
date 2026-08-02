@@ -1,0 +1,71 @@
+{
+  "name": "Global Media - Critical Error to Telegram",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "error-trigger",
+      "name": "Workflow Error Trigger",
+      "type": "n8n-nodes-base.errorTrigger",
+      "typeVersion": 1,
+      "position": [260, 300]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "severity",
+              "name": "severity",
+              "value": "critical",
+              "type": "string"
+            },
+            {
+              "id": "message",
+              "name": "message",
+              "value": "=🚨 GLOBAL MEDIA SYSTEM\n\nAkış: {{ $json.workflow.name || 'Bilinmiyor' }}\nHata: {{ $json.execution.error.message || 'Açıklama yok' }}\nÇalışma ID: {{ $json.execution.id || '-' }}\nSaat: {{ $now.setZone('Europe/Berlin').toFormat('dd.MM.yyyy HH:mm:ss') }}\n\nİlgili yayın kuyruğu kontrol edilmelidir.",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "format-alert",
+      "name": "Format Critical Alert",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [500, 300]
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $env.TELEGRAM_OWNER_CHAT_ID }}",
+        "text": "={{ $json.message }}",
+        "additionalFields": {
+          "appendAttribution": false
+        }
+      },
+      "id": "telegram-send",
+      "name": "Send Telegram Alert",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [740, 300]
+    }
+  ],
+  "connections": {
+    "Workflow Error Trigger": {
+      "main": [[{"node": "Format Critical Alert", "type": "main", "index": 0}]]
+    },
+    "Format Critical Alert": {
+      "main": [[{"node": "Send Telegram Alert", "type": "main", "index": 0}]]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "Europe/Berlin"
+  },
+  "active": false,
+  "versionId": "d09322f5-e4e0-49e9-8b85-0a6f2d4f4380",
+  "meta": {
+    "templateCredsSetupCompleted": false
+  },
+  "tags": []
+}
