@@ -1,0 +1,51 @@
+{
+  "name": "Global Media - Daily Executive Report",
+  "nodes": [
+    {
+      "parameters": {"rule": {"interval": [{"field": "cronExpression", "expression": "0 9 * * *"}]}},
+      "id": "schedule",
+      "name": "Every Day 09:00 Berlin",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [220, 300]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT count(*) FILTER (WHERE created_at >= now()-interval '24 hours') AS created, count(*) FILTER (WHERE status='published' AND published_at >= now()-interval '24 hours') AS published, count(*) FILTER (WHERE status='rejected' AND updated_at >= now()-interval '24 hours') AS rejected, COALESCE(sum(cost_eur) FILTER (WHERE created_at >= now()-interval '24 hours'),0) AS cost FROM content_items;"
+      },
+      "id": "stats",
+      "name": "Read Daily Stats",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [460, 300]
+    },
+    {
+      "parameters": {
+        "assignments": {"assignments": [{"id":"message","name":"message","type":"string","value":"=📊 GLOBAL MEDIA GÜNLÜK RAPOR\n\nHazırlanan: {{ $json.created || 0 }}\nYayımlanan: {{ $json.published || 0 }}\nReddedilen: {{ $json.rejected || 0 }}\nMaliyet: €{{ Number($json.cost || 0).toFixed(2) }}\nTarih: {{ $now.setZone('Europe/Berlin').toFormat('dd.MM.yyyy') }}"}]},
+        "options": {}
+      },
+      "id": "format",
+      "name": "Format Report",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [700, 300]
+    },
+    {
+      "parameters": {"chatId":"={{ $env.TELEGRAM_OWNER_CHAT_ID }}","text":"={{ $json.message }}","additionalFields":{"appendAttribution":false}},
+      "id": "telegram",
+      "name": "Send Telegram Report",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [940, 300]
+    }
+  ],
+  "connections": {
+    "Every Day 09:00 Berlin": {"main":[[{"node":"Read Daily Stats","type":"main","index":0}]]},
+    "Read Daily Stats": {"main":[[{"node":"Format Report","type":"main","index":0}]]},
+    "Format Report": {"main":[[{"node":"Send Telegram Report","type":"main","index":0}]]}
+  },
+  "settings": {"executionOrder":"v1","timezone":"Europe/Berlin"},
+  "active": false,
+  "tags": []
+}
