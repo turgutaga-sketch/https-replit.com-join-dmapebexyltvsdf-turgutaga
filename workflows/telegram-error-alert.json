@@ -37,7 +37,7 @@
     },
     {
       "parameters": {
-        "chatId": "={{ $env.TELEGRAM_OWNER_CHAT_ID }}",
+        "chatId": "CHANGE_ME_OWNER_CHAT_ID",
         "text": "={{ $json.message }}",
         "additionalFields": {
           "appendAttribution": false
